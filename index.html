@@ -12,11 +12,15 @@ canvas { width: 100%; max-width: 900px; border: 1px solid #ccc;
 display: none; }
 
 input[id^="time"] {
-  width: 150px;
+  width: 100px;
 }
 
 input[id^="title"] {
-  width: 150px;
+  width: 100px;
+}
+
+input[id^="date"] {
+  width: 100px;
 }
 
 /* =========================
@@ -32,6 +36,11 @@ input[id^="title"] {
   font-family: "MainFont";
   src: url("./fonts/bokutachi.otf");
 }
+
+#previewBtn {
+  font-size: 15px;     
+  padding: 5px 8px;   
+}
 </style>
 
 </head>
@@ -45,8 +54,6 @@ input[id^="title"] {
 <br><br>
 
 <div id="inputs"></div>
-
-<hr>
 
 <label>
   <input type="checkbox" id="enableNote">
@@ -70,7 +77,7 @@ input[id^="title"] {
 <input type="number" id="noteLetterSpacing" value="0" step="0.5" style="width:60px;">
 
 <br>
-<button onclick="drawAll()">プレビュー</button>
+<button id="previewBtn" onclick="drawAll()">プレビュー</button>
 
 <br><br>
 
