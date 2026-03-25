@@ -30,7 +30,7 @@ const ctx = canvas.getContext("2d");
 /* ================= テンプレ ================= */
 const templates = {
 sample:{
-name:"テンプレ",
+name:"2月テンプレ",
 image:"./templates/t2m.png",
 areas:[
 { x:100,y:331,width:305,height:268 },
@@ -40,18 +40,42 @@ areas:[
 { x:424,y:727,width:305,height:268 },
 { x:799,y:727,width:305,height:268 },
 { x:1174,y:727,width:305,height:268 }
-],
-datePos:[
-{ x:153,y:348 },
-{ x:528,y:348 },
-{ x:903,y:348 },
-{ x:104,y:744 },
-{ x:479,y:744 },
-{ x:854,y:744 },
-{ x:1229,y:744 }
+]
+},
+sample3:{
+name:"3月テンプレ",
+image:"./templates/t3m.png",
+areas:[
+{ x:100,y:331,width:305,height:268 },
+{ x:475,y:331,width:305,height:268 },
+{ x:850,y:331,width:305,height:268 },
+{ x:49,y:727,width:305,height:268 },
+{ x:424,y:727,width:305,height:268 },
+{ x:799,y:727,width:305,height:268 },
+{ x:1174,y:727,width:305,height:268 }
 ]
 }
 };
+
+/* ================= テンプレ選択 ================= */
+const select = document.getElementById("templateSelect");
+
+Object.keys(templates).forEach(key=>{
+const op = document.createElement("option");
+op.value = key;
+op.textContent = templates[key].name;
+select.appendChild(op);
+});
+
+let currentTemplate = templates.sample;
+const templateImage = new Image();
+
+select.onchange = ()=>{
+currentTemplate = templates[select.value];
+templateImage.src = currentTemplate.image;
+};
+
+templateImage.src = currentTemplate.image;
 
 /* ================= 画像 ================= */
 function loadImg(src){
@@ -59,8 +83,6 @@ const img=new Image();
 img.src=src;
 return img;
 }
-
-const templateImage=new Image();
 
 const icons={
 youtube:loadImg("./icons/YouTube.png"),
@@ -89,7 +111,7 @@ inputDiv.innerHTML+=`
 <input id="title1_${i}"><br>
 
 2件目:
-<input type="checkbox" id="enable2_${i}" onchange="toggle2(${i})">
+<input type="checkbox" id="enable2_${i}" onclick="toggle2(${i})">
 
 <div id="block2_${i}" style="display:none;">
 <select id="icon2_${i}">
@@ -101,7 +123,7 @@ inputDiv.innerHTML+=`
 <input id="title2_${i}"><br>
 
 3件目:
-<input type="checkbox" id="enable3_${i}" onchange="toggle3(${i})">
+<input type="checkbox" id="enable3_${i}" onclick="toggle3(${i})">
 
 <div id="block3_${i}" style="display:none;">
 <select id="icon3_${i}">
@@ -120,7 +142,9 @@ inputDiv.innerHTML+=`
 /* ================= UI制御 ================= */
 function toggle2(i){
 const c=document.getElementById(`enable2_${i}`).checked;
-document.getElementById(`block2_${i}`).style.display=c?"block":"none";
+const block2=document.getElementById(`block2_${i}`);
+
+block2.style.display=c?"block":"none";
 
 if(!c){
 document.getElementById(`enable3_${i}`).checked=false;
@@ -246,7 +270,7 @@ drawTextCenter(p[2].title,cx,y3+40);
 }
 
 /* ================= 実行 ================= */
-async function drawAll(){
+function drawAll(){
 
 ctx.clearRect(0,0,1920,1080);
 ctx.drawImage(templateImage,0,0);
@@ -254,7 +278,7 @@ ctx.drawImage(templateImage,0,0);
 const data=getData();
 
 data.forEach((d,i)=>{
-const area=templates.sample.areas[i];
+const area=currentTemplate.areas[i];
 
 if(d.plans.length===1){
 drawSingle(area,d.plans[0]);
@@ -268,8 +292,6 @@ drawTriple(area,d.plans);
 document.getElementById("previewImage").src=
 canvas.toDataURL("image/png");
 }
-
-templateImage.src="./templates/t2m.png";
 </script>
 </body>
 </html>
