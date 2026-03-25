@@ -289,8 +289,19 @@ function setMainFont(size=42){
 }
 
 function drawTextFit(text,cx,y){
-const w=ctx.measureText(text).width;
-ctx.fillText(text,cx-w/2,y);
+let spacing = -1;
+
+let total = 0;
+for(let c of text){
+  total += ctx.measureText(c).width + spacing;
+}
+
+let x = cx - total/2;
+
+for(let c of text){
+  ctx.fillText(c, x, y);
+  x += ctx.measureText(c).width + spacing;
+}
 }
 
 function drawIconText(icon, text, cx, y){
