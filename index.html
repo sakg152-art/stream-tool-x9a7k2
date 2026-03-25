@@ -1,490 +1,275 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>配信スケジュール作成ツール</title>
 
 <style>
 body { font-family: sans-serif; }
-canvas { width: 100%; max-width: 900px; border: 1px solid #ccc;
-display: none; }
-
-input[id^="time"] {
-  width: 85px;
-}
-
-input[id^="title"] {
-  width: 85px;
-}
-
-input[id^="date"] {
-  width: 85px;
-}
-
-/* =========================
-   ▼フォント設定（ここに追加）
-   ファイル名を自分のものに変更
-========================= */
-@font-face {
-  font-family: "DateFont";
-  src: url("./fonts/KaiseiDecol-Bold.ttf");
-}
-
-@font-face {
-  font-family: "MainFont";
-  src: url("./fonts/bokutachi.otf");
-}
-
-#previewBtn {
-  font-size: 15px;     
-  padding: 5px 8px;   
-}
+canvas { display:none; }
 </style>
-
 </head>
-
 <body>
 
 <h2>スケジュール作成</h2>
-
 テンプレ: <select id="templateSelect"></select>
-
-<br><br>
 
 <div id="inputs"></div>
 
-<label>
-  <input type="checkbox" id="enableNote">
-  備考欄を表示
-</label>
-
-<br>
-
-<textarea id="noteText" rows="4" style="width:400px;" placeholder="備考を入力"></textarea>
-
-<br>
-文字サイズ:
-<input type="number" id="noteFontSize" value="42" style="width:60px;">
-
-<br>
-行間:
-<input type="number" id="noteLineHeight" value="8" style="width:60px;">
-
-<br>
-字間:
-<input type="number" id="noteLetterSpacing" value="0" step="0.5" style="width:60px;">
-
-<br>
-<button id="previewBtn" onclick="drawAll()">プレビュー</button>
+<button onclick="drawAll()">プレビュー</button>
 
 <br><br>
+<img id="previewImage" style="width:900px;">
 
 <canvas id="canvas" width="1920" height="1080"></canvas>
-
-<br>
-
-<img id="previewImage" style="width:100%; max-width:900px;">
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-/* =========================
-   ▼テンプレ設定（最重要）
-   位置・サイズ・日付位置もここで調整
-========================= */
+/* ================= テンプレ ================= */
 const templates = {
-  sample: {
-    name: "2月テンプレ",
-    image: "./templates/t2m.png",
-
-    areas: [
-      { x: 100, y: 331, width: 305, height: 268 },
-      { x: 475, y: 331, width: 305, height: 268 },
-      { x: 850, y: 331, width: 305, height: 268 },
-      { x: 49, y: 727, width: 305, height: 268 },
-      { x: 424, y: 727, width: 305, height: 268 },
-      { x: 799, y: 727, width: 305, height: 268 },
-      { x: 1174, y: 727, width: 305, height: 268 }
-    ],
-
-    /* ▼日付の位置（ここ調整） */
-    datePos: [
-      { x: 153, y: 348 },
-      { x: 528, y: 348 },
-      { x: 903, y: 348 },
-      { x: 104, y: 744 },
-      { x: 479, y: 744 },
-      { x: 854, y: 744 },
-      { x: 1229, y: 744 }
-    ],
-    noteArea: { x: 1188, y: 261, width: 382, height: 422 }
-  },
-
-  sample3: {
-    name: "3月テンプレ",
-    image: "./templates/t3m.png",
-
-    areas: [
-      { x: 100, y: 331, width: 305, height: 268 },
-      { x: 475, y: 331, width: 305, height: 268 },
-      { x: 850, y: 331, width: 305, height: 268 },
-      { x: 49, y: 727, width: 305, height: 268 },
-      { x: 424, y: 727, width: 305, height: 268 },
-      { x: 799, y: 727, width: 305, height: 268 },
-      { x: 1174, y: 727, width: 305, height: 268 }
-    ],
-
-    /* ▼日付の位置（ここ調整） */
-    datePos: [
-      { x: 153, y: 348 },
-      { x: 528, y: 348 },
-      { x: 903, y: 348 },
-      { x: 104, y: 744 },
-      { x: 479, y: 744 },
-      { x: 854, y: 744 },
-      { x: 1229, y: 744 }
-    ],
-    noteArea: { x: 1188, y: 261, width: 382, height: 422 }
-  }
-
+sample:{
+name:"テンプレ",
+image:"./templates/t2m.png",
+areas:[
+{ x:100,y:331,width:305,height:268 },
+{ x:475,y:331,width:305,height:268 },
+{ x:850,y:331,width:305,height:268 },
+{ x:49,y:727,width:305,height:268 },
+{ x:424,y:727,width:305,height:268 },
+{ x:799,y:727,width:305,height:268 },
+{ x:1174,y:727,width:305,height:268 }
+],
+datePos:[
+{ x:153,y:348 },
+{ x:528,y:348 },
+{ x:903,y:348 },
+{ x:104,y:744 },
+{ x:479,y:744 },
+{ x:854,y:744 },
+{ x:1229,y:744 }
+]
+}
 };
 
-/* =========================
-   ▼マーク画像
-========================= */
-const icons = {
-  youtube: loadImg("./icons/YouTube.png"),
-  iriam: loadImg("./icons/IRIAM.png"),
-  twitch: loadImg("./icons/Twitch.png")
-};
-
-const noteFrame = loadImg("templates/note_frame.png");
-
+/* ================= 画像 ================= */
 function loadImg(src){
-  const img = new Image();
-  img.src = src;
-  return img;
+const img=new Image();
+img.src=src;
+return img;
 }
 
-/* =========================
-   UI生成（7日分）
-========================= */
-const inputDiv = document.getElementById("inputs");
+const templateImage=new Image();
 
-for (let i=0;i<7;i++){
-  inputDiv.innerHTML += `
-    <div>
-      <h4>${i+1}日目</h4>
+const icons={
+youtube:loadImg("./icons/YouTube.png"),
+iriam:loadImg("./icons/IRIAM.png"),
+twitch:loadImg("./icons/Twitch.png")
+};
 
-      日付:
-      <input id="date_${i}" placeholder="日付">
+/* ================= UI ================= */
+const inputDiv=document.getElementById("inputs");
 
-      <br>
+for(let i=0;i<7;i++){
+inputDiv.innerHTML+=`
+<div>
+<h4>${i+1}日目</h4>
 
-      1件目:
-      <select id="icon1_${i}">
-        <option value="youtube">YouTube</option>
-        <option value="iriam">IRIAM</option>
-        <option value="twitch">Twitch</option>
-      </select>
-      <input id="time1_${i}" placeholder="時刻">
-      <input id="title1_${i}" placeholder="内容">
+日付:
+<input id="date_${i}"><br>
 
-      <br>
+1件目:
+<select id="icon1_${i}">
+<option value="youtube">YouTube</option>
+<option value="iriam">IRIAM</option>
+<option value="twitch">Twitch</option>
+</select>
+<input id="time1_${i}">
+<input id="title1_${i}"><br>
 
-      2件目:
-      <input type="checkbox" id="enable2_${i}">
-      <select id="icon2_${i}">
-        <option value="youtube">YouTube</option>
-        <option value="iriam">IRIAM</option>
-        <option value="twitch">Twitch</option>
-      </select>
-      <input id="time2_${i}" placeholder="時刻">
-      <input id="title2_${i}" placeholder="内容">
-    </div><hr>
-  `;
+2件目:
+<input type="checkbox" id="enable2_${i}" onchange="toggle2(${i})">
+
+<div id="block2_${i}" style="display:none;">
+<select id="icon2_${i}">
+<option value="youtube">YouTube</option>
+<option value="iriam">IRIAM</option>
+<option value="twitch">Twitch</option>
+</select>
+<input id="time2_${i}">
+<input id="title2_${i}"><br>
+
+3件目:
+<input type="checkbox" id="enable3_${i}" onchange="toggle3(${i})">
+
+<div id="block3_${i}" style="display:none;">
+<select id="icon3_${i}">
+<option value="youtube">YouTube</option>
+<option value="iriam">IRIAM</option>
+<option value="twitch">Twitch</option>
+</select>
+<input id="time3_${i}">
+<input id="title3_${i}">
+</div>
+</div>
+
+</div><hr>`;
 }
 
-/* =========================
-   テンプレ選択
-========================= */
-const select = document.getElementById("templateSelect");
+/* ================= UI制御 ================= */
+function toggle2(i){
+const c=document.getElementById(`enable2_${i}`).checked;
+document.getElementById(`block2_${i}`).style.display=c?"block":"none";
 
-Object.keys(templates).forEach(key=>{
-  const op=document.createElement("option");
-  op.value=key;
-  op.textContent=templates[key].name;
-  select.appendChild(op);
+if(!c){
+document.getElementById(`enable3_${i}`).checked=false;
+document.getElementById(`block3_${i}`).style.display="none";
+}
+}
+
+function toggle3(i){
+const c=document.getElementById(`enable3_${i}`).checked;
+document.getElementById(`block3_${i}`).style.display=c?"block":"none";
+}
+
+/* ================= データ ================= */
+function getData(){
+const data=[];
+for(let i=0;i<7;i++){
+const plans=[];
+
+const t1=document.getElementById(`time1_${i}`).value;
+const title1=document.getElementById(`title1_${i}`).value;
+const icon1=document.getElementById(`icon1_${i}`).value;
+
+if(t1&&title1){
+plans.push({time:t1,title:title1,icon:icon1});
+}
+
+if(document.getElementById(`enable2_${i}`).checked){
+const t2=document.getElementById(`time2_${i}`).value;
+const title2=document.getElementById(`title2_${i}`).value;
+const icon2=document.getElementById(`icon2_${i}`).value;
+
+if(t2&&title2){
+plans.push({time:t2,title:title2,icon:icon2});
+}
+
+if(document.getElementById(`enable3_${i}`).checked){
+const t3=document.getElementById(`time3_${i}`).value;
+const title3=document.getElementById(`title3_${i}`).value;
+const icon3=document.getElementById(`icon3_${i}`).value;
+
+if(t3&&title3){
+plans.push({time:t3,title:title3,icon:icon3});
+}
+}
+}
+
+data.push({plans});
+}
+return data;
+}
+
+/* ================= 描画 ================= */
+function setFont(size){
+ctx.font=size+"px sans-serif";
+ctx.fillStyle="#51242D";
+}
+
+function drawTextCenter(text,cx,y){
+const w=ctx.measureText(text).width;
+ctx.fillText(text,cx-w/2,y);
+}
+
+function drawIconText(icon,text,cx,y){
+const w=ctx.measureText(text).width;
+const total=40+6+w;
+let x=cx-total/2;
+ctx.drawImage(icons[icon],x,y-30,40,40);
+ctx.fillText(text,x+46,y);
+}
+
+function drawSingle(area,p){
+const cx=area.x+area.width/2;
+setFont(42);
+drawIconText(p.icon,p.time,cx,area.y+area.height*0.35);
+drawTextCenter(p.title,cx,area.y+area.height*0.6);
+}
+
+function drawDouble(area,p){
+const cx=area.x+area.width/2;
+const mid=area.y+area.height/2;
+
+ctx.beginPath();
+ctx.moveTo(area.x+10,mid);
+ctx.lineTo(area.x+area.width-10,mid);
+ctx.stroke();
+
+setFont(40);
+
+drawIconText(p[0].icon,p[0].time,cx,area.y+area.height*0.3);
+drawTextCenter(p[0].title,cx,area.y+area.height*0.5);
+
+drawIconText(p[1].icon,p[1].time,cx,area.y+area.height*0.7);
+drawTextCenter(p[1].title,cx,area.y+area.height*0.9);
+}
+
+function drawTriple(area,p){
+const cx=area.x+area.width/2;
+
+const l1=area.y+area.height*0.33;
+const l2=area.y+area.height*0.66;
+
+ctx.beginPath();
+ctx.moveTo(area.x+10,l1);
+ctx.lineTo(area.x+area.width-10,l1);
+ctx.moveTo(area.x+10,l2);
+ctx.lineTo(area.x+area.width-10,l2);
+ctx.stroke();
+
+setFont(34);
+
+const y1=area.y+area.height*0.2;
+const y2=area.y+area.height*0.5;
+const y3=area.y+area.height*0.8;
+
+drawIconText(p[0].icon,p[0].time,cx,y1);
+drawTextCenter(p[0].title,cx,y1+40);
+
+drawIconText(p[1].icon,p[1].time,cx,y2);
+drawTextCenter(p[1].title,cx,y2+40);
+
+drawIconText(p[2].icon,p[2].time,cx,y3);
+drawTextCenter(p[2].title,cx,y3+40);
+}
+
+/* ================= 実行 ================= */
+async function drawAll(){
+
+ctx.clearRect(0,0,1920,1080);
+ctx.drawImage(templateImage,0,0);
+
+const data=getData();
+
+data.forEach((d,i)=>{
+const area=templates.sample.areas[i];
+
+if(d.plans.length===1){
+drawSingle(area,d.plans[0]);
+}else if(d.plans.length===2){
+drawDouble(area,d.plans);
+}else if(d.plans.length===3){
+drawTriple(area,d.plans);
+}
 });
 
-let currentTemplate = templates["sample3"];
-const templateImage = new Image();
-
-select.onchange=()=>{
-  currentTemplate=templates[select.value];
-  loadTemplate();
-};
-
-function loadTemplate(){
-  templateImage.src=currentTemplate.image;
-}
-loadTemplate();
-
-/* =========================
-   データ取得
-========================= */
-function getData(){
-  const data=[];
-
-  for(let i=0;i<7;i++){
-    const plans=[];
-
-    const date=document.getElementById(`date_${i}`).value;
-
-    const t1=document.getElementById(`time1_${i}`).value;
-    const title1=document.getElementById(`title1_${i}`).value;
-    const icon1=document.getElementById(`icon1_${i}`).value;
-
-    if(t1 && title1){
-      plans.push({time:t1,title:title1,icon:icon1});
-    }
-
-    if(document.getElementById(`enable2_${i}`).checked){
-      const t2=document.getElementById(`time2_${i}`).value;
-      const title2=document.getElementById(`title2_${i}`).value;
-      const icon2=document.getElementById(`icon2_${i}`).value;
-
-      if(t2 && title2){
-        plans.push({time:t2,title:title2,icon:icon2});
-      }
-    }
-
-    data.push({date,plans});
-  }
-
-  return data;
+document.getElementById("previewImage").src=
+canvas.toDataURL("image/png");
 }
 
-/* =========================
-   ▼フォント切替
-========================= */
-function setDateFont(size=41){
-  ctx.font = size + "px DateFont";
-  ctx.fillStyle = "#51242D";
-}
-
-function setMainFont(size=42){
-  ctx.font = size + "px MainFont";
-  ctx.fillStyle = "#51242D";
-}
-
-/* =========================
-   ▼文字間調整
-========================= */
-function drawTextFit(text, cx, y, maxW){
-  let spacing=0;
-
-  for(let i=0;i<20;i++){
-    let w=0;
-    for(let c of text){
-      w+=ctx.measureText(c).width+spacing;
-    }
-    if(w<=maxW)break;
-    spacing-=0.5;
-  }
-
-  let total=0;
-  for(let c of text){
-    total+=ctx.measureText(c).width+spacing;
-  }
-
-  let x=cx-total/2;
-
-  for(let c of text){
-    ctx.fillText(c,x,y);
-    x+=ctx.measureText(c).width+spacing;
-  }
-}
-
-/* =========================
-   マーク＋時刻
-========================= */
-function drawIconText(icon, text, cx, y){
-  const iconW=40;
-  const gap=6;
-
-  const textW=ctx.measureText(text).width;
-  const total=iconW+gap+textW;
-
-  let x=cx-total/2;
-
-  ctx.drawImage(icons[icon],x,y-38,iconW,40);
-  ctx.fillText(text,x+iconW+gap,y);
-}
-
-/* =========================
-   1件
-========================= */
-function drawSingle(area,plan){
-  const cx=area.x+area.width/2;
-
-  setMainFont(42);
-  drawIconText(plan.icon,plan.time,cx,area.y+area.height*0.35);
-
-  setMainFont(42);
-  drawTextFit(plan.title,cx,area.y+area.height*0.55,area.width);
-}
-
-/* =========================
-   2件
-========================= */
-function drawDouble(area,plans){
-  const cx=area.x+area.width/2;
-  const mid=area.y+area.height/1.61;
-
-  ctx.beginPath();
-
-  ctx.strokeStyle = "#51242D";
-  ctx.lineWidth = 2.5;
-
-  const margin = 30;
-
-  ctx.moveTo(area.x+10,mid);
-  ctx.lineTo(area.x+area.width-10,mid);
-  ctx.stroke();
-
-  setMainFont(42);
-
-  drawIconText(plans[0].icon,plans[0].time,cx,area.y+area.height*0.345);
-  drawTextFit(plans[0].title,cx,area.y+area.height*0.545,area.width);
-
-  drawIconText(plans[1].icon,plans[1].time,cx,area.y+area.height*0.83);
-  drawTextFit(plans[1].title,cx,area.y+area.height*1.03,area.width);
-}
-
-
-
-function drawOff(area){
-  setMainFont(42);
-
-  ctx.fillStyle = "#51242D"; 
-
-  const text = "おやすみ";
-
-  const x = area.x + area.width / 2;
-  const y = area.y + area.height * 0.35;
-
-  const textWidth = ctx.measureText(text).width;
-
-  ctx.fillText(
-    text,
-    x - textWidth / 2,
-    y
-  );
-}
-
-function drawNote(area, text, fontSize, lineGap, letterSpacing){
-  ctx.drawImage(noteFrame, area.x, area.y, area.width, area.height);
-
-  setMainFont(fontSize);
-
-  const centerX = area.x + area.width / 2.15;
-
-  let y = area.y + area.height / 1.7;
-
-  const lines = text.split("\n");
-
-  const totalHeight = lines.length * (fontSize + lineGap) - lineGap;
-  y -= totalHeight / 2;
-
-  lines.forEach(line=>{
-    let lineWidth = 0;
-    for(let c of line){
-      lineWidth += ctx.measureText(c).width + letterSpacing;
-    }
-
-    let x = centerX - lineWidth / 2;
-
-    for(let c of line){
-      ctx.fillText(c, x, y);
-      x += ctx.measureText(c).width + letterSpacing;
-    }
-
-    y += fontSize + lineGap;
-  });
-}
-
-/* =========================
-   描画
-========================= */
-function waitImage(img){
-  return new Promise(res=>{
-    if(img.complete){
-      res();
-    }else{
-      img.onload = res;
-    }
-  });
-}
-
-async function drawAll(){
-  await document.fonts.ready;
-
-  await Promise.all([
-    waitImage(templateImage),
-    waitImage(noteFrame),
-    ...Object.values(icons).map(waitImage)
-  ]);
-
-  ctx.clearRect(0,0,1920,1080);
-  ctx.drawImage(templateImage,0,0);
-
-  const data=getData();
-
-  data.forEach((d,i)=>{
-    const area=currentTemplate.areas[i];
-
-    /* ▼日付描画 */
-    if(d.date){
-      setDateFont(41);
-      const pos=currentTemplate.datePos[i];
-      ctx.fillText(d.date,pos.x,pos.y);
-    }
-
-    if(d.plans.length===0){
-  drawOff(area);
-}else if(d.plans.length===1){
-  drawSingle(area,d.plans[0]);
-}else if(d.plans.length===2){
-  drawDouble(area,d.plans);
-}
-  });
-
-const noteEnabled = document.getElementById("enableNote").checked;
-const noteText = document.getElementById("noteText").value;
-
-const noteFontSize = Number(document.getElementById("noteFontSize").value) || 42;
-const noteLineHeight = Number(document.getElementById("noteLineHeight").value) || 8;
-const noteLetterSpacing = Number(document.getElementById("noteLetterSpacing").value) || 0;
-
-if(noteEnabled && currentTemplate.noteArea){
-  drawNote(
-    currentTemplate.noteArea,
-    noteText,
-    noteFontSize,
-    noteLineHeight,
-    noteLetterSpacing
-  );
-}
-
-const img = document.getElementById("previewImage");
-img.src = canvas.toDataURL("image/png");
-}
-
+templateImage.src="./templates/t2m.png";
 </script>
-
 </body>
 </html>
