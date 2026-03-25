@@ -14,6 +14,17 @@ input[id^="title"],
 input[id^="date"] {
   width: 85px;
 }
+
+@font-face {
+  font-family: "DateFont";
+  src: url("./fonts/KaiseiDecol-Bold.ttf");
+}
+
+@font-face {
+  font-family: "MainFont";
+  src: url("./fonts/bokutachi.otf");
+}
+
 </style>
 </head>
 <body>
@@ -243,9 +254,14 @@ return data;
 }
 
 /* ================= 描画 ================= */
-function setFont(size){
-ctx.font=size+"px sans-serif";
-ctx.fillStyle="#51242D";
+function setDateFont(size=40){
+  ctx.font = size + "px DateFont";
+  ctx.fillStyle = "#51242D";
+}
+
+function setMainFont(size=42){
+  ctx.font = size + "px MainFont";
+  ctx.fillStyle = "#51242D";
 }
 
 function drawTextCenter(text,cx,y){
@@ -263,7 +279,7 @@ ctx.fillText(text,x+46,y);
 
 function drawSingle(area,p){
 const cx=area.x+area.width/2;
-setFont(42);
+setMainFont(42);
 drawIconText(p.icon,p.time,cx,area.y+area.height*0.35);
 drawTextCenter(p.title,cx,area.y+area.height*0.6);
 }
@@ -277,7 +293,7 @@ ctx.moveTo(area.x+10,mid);
 ctx.lineTo(area.x+area.width-10,mid);
 ctx.stroke();
 
-setFont(40);
+setMainFont(42);
 
 drawIconText(p[0].icon,p[0].time,cx,area.y+area.height*0.3);
 drawTextCenter(p[0].title,cx,area.y+area.height*0.5);
@@ -299,7 +315,7 @@ ctx.moveTo(area.x+10,l2);
 ctx.lineTo(area.x+area.width-10,l2);
 ctx.stroke();
 
-setFont(34);
+setMainFont(42);
 
 const y1=area.y+area.height*0.2;
 const y2=area.y+area.height*0.5;
@@ -316,7 +332,7 @@ drawTextCenter(p[2].title,cx,y3+40);
 }
 
 function drawOff(area){
-setFont(42);
+setMainFont(42);
 const text="おやすみ";
 const x=area.x+area.width/2;
 const y=area.y+area.height*0.4;
@@ -325,7 +341,9 @@ ctx.fillText(text,x-w/2,y);
 }
 
 /* ================= 実行 ================= */
-function drawAll(){
+async function drawAll(){
+
+await document.fonts.ready;
 
 ctx.clearRect(0,0,1920,1080);
 ctx.drawImage(templateImage,0,0);
@@ -337,7 +355,7 @@ const area=currentTemplate.areas[i];
 
 /* 日付は常に表示 */
 if(d.date){
-setFont(40);
+setDateFont(40);
 const pos=currentTemplate.datePos[i];
 ctx.fillText(d.date,pos.x,pos.y);
 }
