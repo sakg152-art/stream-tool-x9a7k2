@@ -24,7 +24,6 @@ input[id^="date"] {
   font-family: "MainFont";
   src: url("./fonts/bokutachi.otf");
 }
-
 </style>
 </head>
 <body>
@@ -33,6 +32,26 @@ input[id^="date"] {
 テンプレ: <select id="templateSelect"></select>
 
 <div id="inputs"></div>
+
+<!-- ▼備考欄UI追加 -->
+<label>
+<input type="checkbox" id="enableNote">
+備考欄を表示
+</label>
+<br>
+
+<textarea id="noteText" rows="4" style="width:400px;"></textarea>
+
+<br>
+文字サイズ:
+<input type="number" id="noteFontSize" value="42" style="width:60px;">
+
+<br> 行間:
+<input type="number" id="noteLineHeight" value="8" style="width:60px;">
+
+<br> 字間:
+<input type="number" id="noteLetterSpacing" value="0" step="0.5" style="width:60px;">
+<br><br>
 
 <button onclick="drawAll()">プレビュー</button>
 
@@ -67,7 +86,8 @@ datePos:[
 { x:479,y:744 },
 { x:854,y:744 },
 { x:1229,y:744 }
-]
+],
+noteArea:{ x:1188, y:261, width:382, height:422 }
 },
 
 sample3:{
@@ -90,7 +110,8 @@ datePos:[
 { x:479,y:744 },
 { x:854,y:744 },
 { x:1229,y:744 }
-]
+],
+noteArea:{ x:1188, y:261, width:382, height:422 }
 }
 };
 
@@ -126,6 +147,9 @@ youtube:loadImg("./icons/YouTube.png"),
 iriam:loadImg("./icons/IRIAM.png"),
 twitch:loadImg("./icons/Twitch.png")
 };
+
+/* ▼備考枠画像追加 */
+const noteFrame = loadImg("./templates/note_frame.png");
 
 /* ================= UI ================= */
 const inputDiv=document.getElementById("inputs");
@@ -264,7 +288,7 @@ function setMainFont(size=42){
   ctx.fillStyle = "#51242D";
 }
 
-function drawTextCenter(text,cx,y){
+function drawTextFit(text,cx,y){
 const w=ctx.measureText(text).width;
 ctx.fillText(text,cx-w/2,y);
 }
@@ -281,7 +305,7 @@ function drawSingle(area,p){
 const cx=area.x+area.width/2;
 setMainFont(42);
 drawIconText(p.icon,p.time,cx,area.y+area.height*0.35);
-drawTextCenter(p.title,cx,area.y+area.height*0.6);
+drawTextFit(p.title,cx,area.y+area.height*0.6);
 }
 
 function drawDouble(area,p){
@@ -296,10 +320,10 @@ ctx.stroke();
 setMainFont(42);
 
 drawIconText(p[0].icon,p[0].time,cx,area.y+area.height*0.3);
-drawTextCenter(p[0].title,cx,area.y+area.height*0.5);
+drawTextFit(p[0].title,cx,area.y+area.height*0.5);
 
 drawIconText(p[1].icon,p[1].time,cx,area.y+area.height*0.7);
-drawTextCenter(p[1].title,cx,area.y+area.height*0.9);
+drawTextFit(p[1].title,cx,area.y+area.height*0.9);
 }
 
 function drawTriple(area,p){
@@ -322,13 +346,13 @@ const y2=area.y+area.height*0.5;
 const y3=area.y+area.height*0.8;
 
 drawIconText(p[0].icon,p[0].time,cx,y1);
-drawTextCenter(p[0].title,cx,y1+40);
+drawTextFit(p[0].title,cx,y1+40);
 
 drawIconText(p[1].icon,p[1].time,cx,y2);
-drawTextCenter(p[1].title,cx,y2+40);
+drawTextFit(p[1].title,cx,y2+40);
 
 drawIconText(p[2].icon,p[2].time,cx,y3);
-drawTextCenter(p[2].title,cx,y3+40);
+drawTextFit(p[2].title,cx,y3+40);
 }
 
 function drawOff(area){
@@ -338,6 +362,36 @@ const x=area.x+area.width/2;
 const y=area.y+area.height*0.4;
 const w=ctx.measureText(text).width;
 ctx.fillText(text,x-w/2,y);
+}
+
+/* ▼備考描画追加 */
+function drawNote(area,text,fontSize,lineGap,letterSpacing){
+ctx.drawImage(noteFrame,area.x,area.y,area.width,area.height);
+
+setMainFont(fontSize);
+
+const centerX=area.x+area.width/2.15;
+let y=area.y+area.height/1.7;
+
+const lines=text.split("\n");
+const totalHeight=lines.length*(fontSize+lineGap)-lineGap;
+y-=totalHeight/2;
+
+lines.forEach(line=>{
+let lineWidth=0;
+for(let c of line){
+lineWidth+=ctx.measureText(c).width+letterSpacing;
+}
+
+let x=centerX-lineWidth/2;
+
+for(let c of line){
+ctx.fillText(c,x,y);
+x+=ctx.measureText(c).width+letterSpacing;
+}
+
+y+=fontSize+lineGap;
+});
 }
 
 /* ================= 実行 ================= */
@@ -373,6 +427,27 @@ drawDouble(area,d.plans);
 drawTriple(area,d.plans);
 }
 });
+
+/* ▼備考処理追加 */
+const noteEnabled = document.getElementById("enableNote").checked;
+const noteText = document.getElementById("noteText").value;
+
+const noteFontSize =
+Number(document.getElementById("noteFontSize").value) || 42;
+const noteLineHeight =
+Number(document.getElementById("noteLineHeight").value) || 8;
+const noteLetterSpacing =
+Number(document.getElementById("noteLetterSpacing").value) || 0;
+
+if(noteEnabled && currentTemplate.noteArea){
+drawNote(
+currentTemplate.noteArea,
+noteText,
+noteFontSize,
+noteLineHeight,
+noteLetterSpacing
+);
+}
 
 document.getElementById("previewImage").src=
 canvas.toDataURL("image/png");
