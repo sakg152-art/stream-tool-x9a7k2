@@ -293,24 +293,28 @@ const w=ctx.measureText(text).width;
 ctx.fillText(text,cx-w/2,y);
 }
 
-function drawIconText(icon,text,cx,y){
-const w=ctx.measureText(text).width;
-const total=40+6+w;
+function drawIconText(icon, text, cx, y){
+const iconW=40;
+const gap=6;
+
+const textW=ctx.measureText(text).width;
+const total=iconW+gap+textW;
+
 let x=cx-total/2;
-ctx.drawImage(icons[icon],x,y-30,40,40);
-ctx.fillText(text,x+46,y);
-}
+
+ctx.drawImage(icons[icon],x,y-38,iconW,40);
+ctx.fillText(text,x+iconW+gap,y); }
 
 function drawSingle(area,p){
 const cx=area.x+area.width/2;
 setMainFont(42);
 drawIconText(p.icon,p.time,cx,area.y+area.height*0.35);
-drawTextFit(p.title,cx,area.y+area.height*0.6);
+drawTextFit(p.title,cx,area.y+area.height*0.55);
 }
 
 function drawDouble(area,p){
 const cx=area.x+area.width/2;
-const mid=area.y+area.height/2;
+const mid=area.y+area.height/1.61;
 
 ctx.beginPath();
 ctx.moveTo(area.x+10,mid);
@@ -319,11 +323,11 @@ ctx.stroke();
 
 setMainFont(42);
 
-drawIconText(p[0].icon,p[0].time,cx,area.y+area.height*0.3);
-drawTextFit(p[0].title,cx,area.y+area.height*0.5);
+drawIconText(p[0].icon,p[0].time,cx,area.y+area.height*0.345);
+drawTextFit(p[0].title,cx,area.y+area.height*0.545);
 
-drawIconText(p[1].icon,p[1].time,cx,area.y+area.height*0.7);
-drawTextFit(p[1].title,cx,area.y+area.height*0.9);
+drawIconText(p[1].icon,p[1].time,cx,area.y+area.height*0.83);
+drawTextFit(p[1].title,cx,area.y+area.height*1.03);
 }
 
 function drawTriple(area,p){
